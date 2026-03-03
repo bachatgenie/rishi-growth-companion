@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ऋषीची प्रगती साथी - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #764ba2;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        .welcome-text {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .pin-display {
+            background: #f0f0f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            letter-spacing: 20px;
+            color: #333;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pin-display.hidden {
+            color: transparent;
+            text-shadow: 0 0 10px #333;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .key {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .key:active {
+            transform: scale(0.95);
+        }
+
+        .key.action {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+        }
+
+        .key.login {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            grid-column: span 2;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .parent-link {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .parent-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .parent-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🚀</div>
+        <h1>ऋषीची प्रगती साथी</h1>
+        <p class="subtitle">Rishi's Growth Companion</p>
+        
+        <p class="welcome-text">Enter your PIN to continue / तुमचा PIN टाका</p>
+        
+        <div class="pin-display hidden" id="pinDisplay"></div>
+        
+        <p class="error" id="errorMsg">Invalid PIN! Please try again. / चुकीचा PIN!</p>
+        
+        <div class="keypad">
+            <button class="key" onclick="addDigit('1')">1</button>
+            <button class="key" onclick="addDigit('2')">2</button>
+            <button class="key" onclick="addDigit('3')">3</button>
+            <button class="key" onclick="addDigit('4')">4</button>
+            <button class="key" onclick="addDigit('5')">5</button>
+            <button class="key" onclick="addDigit('6')">6</button>
+            <button class="key" onclick="addDigit('7')">7</button>
+            <button class="key" onclick="addDigit('8')">8</button>
+            <button class="key" onclick="addDigit('9')">9</button>
+            <button class="key action" onclick="clearPin()">⌫</button>
+            <button class="key" onclick="addDigit('0')">0</button>
+            <button class="key login" onclick="login()">Login / लॉगिन</button>
+        </div>
+
+        <div class="parent-link">
+            <a href="/parent">👨 Parent Login / पालक लॉगिन</a>
+        </div>
+    </div>
+
+    <script>
+        let pin = '';
+        const API_URL = window.location.origin;
+
+        function addDigit(digit) {
+            if (pin.length < 4) {
+                pin += digit;
+                updateDisplay();
+            }
+        }
+
+        function clearPin() {
+            pin = '';
+            updateDisplay();
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        function updateDisplay() {
+            const display = document.getElementById('pinDisplay');
+            display.textContent = '•'.repeat(pin.length);
+            display.classList.toggle('hidden', pin.length === 0);
+        }
+
+        async function login() {
+            if (pin.length !== 4) {
+                document.getElementById('errorMsg').textContent = 'Please enter 4 digits / ४ अंक टाका';
+                document.getElementById('errorMsg').classList.add('show');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/child`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('user', JSON.stringify(data));
+                    window.location.href = '/child/dashboard.html';
+                } else {
+                    document.getElementById('errorMsg').classList.add('show');
+                    pin = '';
+                    updateDisplay();
+                }
+            } catch (e) {
+                document.getElementById('errorMsg').textContent = 'Connection error. Please try again.';
+                document.getElementById('errorMsg').classList.add('show');
+            }
+        }
+
+        // Allow Enter key
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>

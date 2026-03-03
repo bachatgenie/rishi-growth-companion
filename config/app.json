@@ -1,0 +1,127 @@
+{
+  "appName": "Rishi's Growth Companion",
+  "appNameMarathi": "ऋषीची प्रगती साथी",
+  "childName": "Rishi",
+  "childNameMarathi": "ऋषी",
+  "parentName": "Papa",
+  "parentNameMarathi": "पप्पा",
+  "languages": ["en", "mr"],
+  "defaultLanguage": "mixed",
+  "tasks": [
+    {
+      "id": "outdoor_play",
+      "nameEn": "Outdoor Play",
+      "nameMr": "बाहेर खेळणे",
+      "descriptionEn": "Play on open ground for at least 30 minutes",
+      "descriptionMr": "किमान ३० मिनिटं बाहेर खेळा",
+      "points": 10,
+      "gameTimeReward": 15,
+      "category": "physical",
+      "verification": "parent",
+      "icon": "🏃"
+    },
+    {
+      "id": "chess_practice",
+      "nameEn": "Chess Practice",
+      "nameMr": "बुद्धिबळ सराव",
+      "descriptionEn": "Practice chess for 20 minutes",
+      "descriptionMr": "२० मिनिटं बुद्धिबळ सराव करा",
+      "points": 15,
+      "gameTimeReward": 20,
+      "category": "mental",
+      "verification": "self",
+      "icon": "♟️"
+    },
+    {
+      "id": "homework",
+      "nameEn": "Homework",
+      "nameMr": "अभ्यास",
+      "descriptionEn": "Complete all school homework",
+      "descriptionMr": "शाळेचा सर्व अभ्यास पूर्ण करा",
+      "points": 20,
+      "gameTimeReward": 25,
+      "category": "education",
+      "verification": "parent",
+      "icon": "📚"
+    }
+  ],
+  "goodBehaviors": [
+    {
+      "id": "helping",
+      "nameEn": "Helping Others",
+      "nameMr": "इतरांना मदत करणे",
+      "points": 5,
+      "icon": "🤝"
+    },
+    {
+      "id": "politeness",
+      "nameEn": "Being Polite",
+      "nameMr": "शिस्तबद्ध वागणे",
+      "points": 3,
+      "icon": "🙏"
+    },
+    {
+      "id": "reading",
+      "nameEn": "Extra Reading",
+      "nameMr": "अतिरिक्त वाचन",
+      "points": 8,
+      "icon": "📖"
+    }
+  ],
+  "badBehaviors": [
+    {
+      "id": "screen_time",
+      "nameEn": "Excess Screen Time",
+      "nameMr": "जास्त स्क्रीन वेळ",
+      "points": -10,
+      "icon": "📱"
+    },
+    {
+      "id": "not_listening",
+      "nameEn": "Not Listening",
+      "nameMr": "ऐकत नाही",
+      "points": -5,
+      "icon": "🙉"
+    },
+    {
+      "id": "lying",
+      "nameEn": "Dishonesty",
+      "nameMr": "खोटे बोलणे",
+      "points": -15,
+      "icon": "🤥"
+    }
+  ],
+  "rewards": {
+    "daily": {
+      "target": 30,
+      "bonus": 10
+    },
+    "weekly": {
+      "target": 150,
+      "bonus": 50,
+      "badge": "⭐ Weekly Champion"
+    },
+    "monthly": {
+      "target": 600,
+      "bonus": 200,
+      "badge": "🏆 Monthly Master"
+    }
+  },
+  "games": {
+    "roadFighter": {
+      "name": "Road Fighter",
+      "unlockCost": 0,
+      "maxDailyTime": 30
+    }
+  },
+  "auth": {
+    "child": {
+      "pin": "1234",
+      "canChangePin": false
+    },
+    "parent": {
+      "password": "bachatgenie2024",
+      "canChangePassword": true
+    }
+  }
+}

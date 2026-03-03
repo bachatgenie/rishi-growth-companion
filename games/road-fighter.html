@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road Fighter - रोड फायटर</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a3e;
+            font-family: 'Comic Sans MS', sans-serif;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #gameCanvas {
+            border: 3px solid #4ecdc4;
+            border-radius: 10px;
+            background: #2d5a3d;
+        }
+        #ui {
+            color: white;
+            margin-top: 10px;
+        }
+        #timeLeft {
+            font-size: 1.5rem;
+            color: #ffd700;
+        }
+        #score {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+        }
+        #instructions {
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div id="ui">
+            <div id="timeLeft">Time: 0 min</div>
+            <div id="score">Score: 0</div>
+            <div id="instructions">Use Arrow Keys / बाण की वापरा</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameTime = 0;
+        let maxTime = 0;
+        let score = 0;
+        let gameRunning = false;
+        let lastTime = 0;
+        
+        // Player car
+        const player = {
+            x: 180,
+            y: 500,
+            width: 40,
+            height: 60,
+            speed: 5
+        };
+        
+        // Enemy cars
+        let enemies = [];
+        let enemySpeed = 3;
+        
+        // Road lines
+        let roadLines = [];
+        for (let i = 0; i < 6; i++) {
+            roadLines.push({ y: i * 100 });
+        }
+        
+        // Get game time from parent window
+        function getGameTime() {
+            try {
+                if (window.opener && window.opener.progress) {
+                    const p = window.opener.progress;
+                    return p.gameTimeEarned - p.gameTimeUsed;
+                }
+            } catch (e) {}
+            return 10; // Default 10 minutes
+        }
+        
+        function init() {
+            maxTime = getGameTime();
+            gameTime = maxTime * 60; // Convert to seconds
+            gameRunning = true;
+            lastTime = Date.now();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Update game time
+            gameTime -= deltaTime;
+            if (gameTime <= 0) {
+                gameOver();
+                return;
+            }
+            
+            update(deltaTime);
+            draw();
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update(deltaTime) {
+            // Move road lines
+            roadLines.forEach(line => {
+                line.y += 200 * deltaTime;
+                if (line.y > 600) line.y = -50;
+            });
+            
+            // Spawn enemies
+            if (Math.random() < 0.02) {
+                enemies.push({
+                    x: 50 + Math.floor(Math.random() * 3) * 100,
+                    y: -60,
+                    width: 40,
+                    height: 60,
+                    color: ['#ff6b6b', '#ffd700', '#4ecdc4'][Math.floor(Math.random() * 3)]
+                });
+            }
+            
+            // Move enemies
+            enemies.forEach((enemy, index) => {
+                enemy.y += (200 + score * 2) * deltaTime;
+                
+                // Check collision
+                if (checkCollision(player, enemy)) {
+                    gameOver();
+                }
+                
+                // Remove off-screen enemies and add score
+                if (enemy.y > 600) {
+                    enemies.splice(index, 1);
+                    score += 10;
+                }
+            });
+        }
+        
+        function checkCollision(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+        
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#2d5a3d';
+            ctx.fillRect(0, 0, 400, 600);
+            
+            // Draw road
+            ctx.fillStyle = '#444';
+            ctx.fillRect(50, 0, 300, 600);
+            
+            // Draw road lines
+            ctx.fillStyle = '#fff';
+            roadLines.forEach(line => {
+                ctx.fillRect(145, line.y, 10, 50);
+                ctx.fillRect(245, line.y, 10, 50);
+            });
+            
+            // Draw grass edges
+            ctx.fillStyle = '#2d5a3d';
+            ctx.fillRect(0, 0, 50, 600);
+            ctx.fillRect(350, 0, 50, 600);
+            
+            // Draw player car
+            ctx.fillStyle = '#4ecdc4';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            // Car details
+            ctx.fillStyle = '#2d8a8a';
+            ctx.fillRect(player.x + 5, player.y + 10, 30, 20);
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(player.x + 5, player.y + 50, 10, 5);
+            ctx.fillRect(player.x + 25, player.y + 50, 10, 5);
+            
+            // Draw enemies
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                // Enemy car details
+                ctx.fillStyle = '#333';
+                ctx.fillRect(enemy.x + 5, enemy.y + 35, 30, 15);
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(enemy.x + 5, enemy.y + 5, 10, 5);
+                ctx.fillRect(enemy.x + 25, enemy.y + 5, 10, 5);
+            });
+        }
+        
+        function updateUI() {
+            const minutes = Math.floor(gameTime / 60);
+            const seconds = Math.floor(gameTime % 60);
+            document.getElementById('timeLeft').textContent = 
+                `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('score').textContent = `Score: ${score}`;
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            const timeUsed = Math.ceil((maxTime * 60 - gameTime) / 60);
+            
+            // Report time used to parent
+            try {
+                if (window.opener) {
+                    fetch(`${window.opener.API_URL}/api/progress/use-game-time`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ minutes: timeUsed })
+                    });
+                }
+            } catch (e) {}
+            
+            alert(`Game Over! / खेळ संपला!\nScore: ${score}\nTime used: ${timeUsed} minutes`);
+            window.close();
+        }
+        
+        // Controls
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            if (e.key === 'ArrowLeft' && player.x > 60) {
+                player.x -= 100;
+            }
+            if (e.key === 'ArrowRight' && player.x < 260) {
+                player.x += 100;
+            }
+            if (e.key === 'ArrowUp' && player.y > 100) {
+                player.y -= 20;
+            }
+            if (e.key === 'ArrowDown' && player.y < 520) {
+                player.y += 20;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Start game
+        init();
+    </script>
+</body>
+</html>
