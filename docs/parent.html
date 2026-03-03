@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard - पालक डॅशबोर्ड</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d2d5a 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #764ba2;
+            font-size: 1.5rem;
+        }
+        
+        .header .subtitle {
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+        
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-bar {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #4ecdc4, #44a08d);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .task-item.completed {
+            background: #d4edda;
+        }
+        
+        .task-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-weight: bold;
+        }
+        
+        .task-status {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+        
+        .behavior-log {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-item.good {
+            background: #d4edda;
+        }
+        
+        .log-item.bad {
+            background: #f8d7da;
+        }
+        
+        .log-time {
+            font-size: 0.8rem;
+            color: #999;
+            margin-left: auto;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: white;
+        }
+        
+        .elo-display {
+            background: linear-gradient(145deg, #764ba2, #667eea);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .elo-display .score {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        
+        .elo-display .rank {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px;
+        }
+        
+        .chart-bar {
+            width: 40px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+        }
+        
+        .chart-bar::after {
+            content: attr(data-day);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+        }
+        
+        .message-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .message-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .message-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .badge-gold {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #333;
+        }
+        
+        .badge-silver {
+            background: linear-gradient(145deg, #c0c0c0, #a0a0a0);
+            color: #333;
+        }
+        
+        .badge-bronze {
+            background: linear-gradient(145deg, #cd7f32, #b87333);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+        <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 400px; width: 100%;">
+            <h1 style="color: #764ba2; margin-bottom: 10px;">👨 Parent Login</h1>
+            <p style="color: #667eea; margin-bottom: 30px;">पालक लॉगिन</p>
+            
+            <input type="password" id="parentPassword" placeholder="Enter password" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; font-size: 1rem;">
+            
+            <button class="btn btn-primary" onclick="login()" style="width: 100%;">Login / लॉगिन</button>
+            
+            <p id="loginError" style="color: #ff6b6b; margin-top: 15px; display: none;">Wrong password! / चुकीचा पासवर्ड!</p>
+            
+            <p style="margin-top: 20px;"><a href="index.html" style="color: #667eea;">← Back to Home / मुख्यपृष्ठावर परत जा</a></p>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" style="display: none;">
+        <div class="header">
+            <div>
+                <h1>👨 Parent Dashboard / पालक डॅशबोर्ड</h1>
+                <span class="subtitle">Monitor Rishi's progress / ऋषीची प्रगती पहा</span>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout / बाहेर पडा</button>
+        </div>
+
+        <div class="container">
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon">⭐</div>
+                    <div class="value" id="totalPoints">0</div>
+                    <div class="label">Total Points / एकूण गुण</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">🔥</div>
+                    <div class="value" id="streak">0</div>
+                    <div class="label">Day Streak / दिवस सलग</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">🎯</div>
+                    <div class="value" id="tasksCompleted">0</div>
+                    <div class="label">Tasks Done / कामे पूर्ण</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon">🎮</div>
+                    <div class="value" id="gameTime">0</div>
+                    <div class="label">Game Minutes / खेळाची वेळ</div>
+                </div>
+            </div>
+
+            <!-- ELO Ranking -->
+            <div class="section">
+                <h2>🏆 ELO Ranking / रँकिंग</h2>
+                
+                <div class="elo-display">
+                    <div class="score" id="eloScore">400</div>
+                    <div class="rank" id="eloRank">Beginner / नवशिक्या</div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <p>Progress to next rank / पुढच्या रँककडे प्रगती:</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="eloProgress" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Tasks -->
+            <div class="section">
+                <h2>📋 Today's Tasks / आजची कामे</h2>
+                
+                <div id="todayTasks">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Weekly Progress Chart -->
+            <div class="section">
+                <h2>📊 Weekly Progress / साप्ताहिक प्रगती</h2>
+                
+                <div class="chart-container" id="weeklyChart">
+                    <!-- Bars generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Behavior Log -->
+            <div class="section">
+                <h2>📜 Behavior Log / वागणूक नोंद</h2>
+                
+                <div class="behavior-log" id="behaviorLog">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Send Message -->
+            <div class="section">
+                <h2>💬 Send Message / संदेश पाठवा</h2>
+                
+                <div class="message-box">
+                    <input type="text" id="messageEn" placeholder="Message in English">
+                    <input type="text" id="messageMr" placeholder="मराठीमध्ये संदेश">
+                    <button class="btn btn-success" onclick="sendMessage()">Send / पाठवा</button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <h2>⚡ Quick Actions / जलद क्रिया</h2>
+                
+                <button class="btn btn-success" onclick="addGameTime()">➕ Add Game Time / खेळाची वेळ वाढवा</button>
+                <button class="btn btn-danger" onclick="resetDaily()">🔄 Reset Daily / दैनिक रीसेट करा</button>
+                <button class="btn btn-primary" onclick="exportData()">📥 Export Data / डेटा निर्यात करा</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data management
+        function getData() {
+            return {
+                totalPoints: parseInt(localStorage.getItem('totalPoints') || '0'),
+                gameTime: parseInt(localStorage.getItem('gameTime') || '0'),
+                elo: parseInt(localStorage.getItem('elo') || '400'),
+                completedTasks: JSON.parse(localStorage.getItem('completedTasks') || '[]'),
+                behaviors: JSON.parse(localStorage.getItem('behaviors') || '[]')
+            };
+        }
+
+        function login() {
+            const pass = document.getElementById('parentPassword').value;
+            if (pass === 'bachatgenie2024') {
+                localStorage.setItem('parentLoggedIn', 'true');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDashboard();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('parentLoggedIn');
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('parentPassword').value = '';
+        }
+
+        function loadDashboard() {
+            const data = getData();
+            
+            // Stats
+            document.getElementById('totalPoints').textContent = data.totalPoints;
+            document.getElementById('gameTime').textContent = data.gameTime;
+            document.getElementById('tasksCompleted').textContent = data.completedTasks.length;
+            document.getElementById('streak').textContent = calculateStreak();
+            
+            // ELO
+            document.getElementById('eloScore').textContent = data.elo;
+            const rank = getRank(data.elo);
+            document.getElementById('eloRank').textContent = rank.en + ' / ' + rank.mr;
+            
+            const progress = Math.min(100, ((data.elo % 400) / 400) * 100);
+            document.getElementById('eloProgress').style.width = progress + '%';
+            document.getElementById('eloProgress').textContent = Math.round(progress) + '%';
+            
+            // Tasks
+            renderTasks(data);
+            
+            // Chart
+            renderChart();
+            
+            // Behavior log
+            renderBehaviorLog(data);
+        }
+
+        function getRank(elo) {
+            if (elo >= 2400) return { en: 'Grandmaster', mr: 'ग्रँडमास्टर' };
+            if (elo >= 2000) return { en: 'Master', mr: 'मास्टर' };
+            if (elo >= 1600) return { en: 'Expert', mr: 'तज्ञ' };
+            if (elo >= 1200) return { en: 'Advanced', mr: 'प्रगत' };
+            if (elo >= 800) return { en: 'Intermediate', mr: 'मध्यम' };
+            return { en: 'Beginner', mr: 'नवशिक्या' };
+        }
+
+        function calculateStreak() {
+            // Simplified streak calculation
+            return parseInt(localStorage.getItem('streak') || '0');
+        }
+
+        function renderTasks(data) {
+            const tasks = [
+                { id: 'outdoor', icon: '🏃', name: 'Outdoor Play / बाहेर खेळणे' },
+                { id: 'chess', icon: '♟️', name: 'Chess Practice / बुद्धिबळ सराव' },
+                { id: 'homework', icon: '📚', name: 'Homework / अभ्यास' }
+            ];
+            
+            const container = document.getElementById('todayTasks');
+            container.innerHTML = tasks.map(task => {
+                const completed = data.completedTasks.includes(task.id);
+                return `
+                    <div class="task-item ${completed ? 'completed' : ''}">
+                        <div class="task-icon">${task.icon}</div>
+                        <div class="task-info">
+                            <div class="task-name">${task.name}</div>
+                        </div>
+                        <div class="task-status">${completed ? '✓ Done / पूर्ण' : '⏳ Pending / बाकी'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderChart() {
+            const container = document.getElementById('weeklyChart');
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            
+            container.innerHTML = days.map(day => {
+                const height = Math.random() * 80 + 20;
+                return `<div class="chart-bar" style="height: ${height}%;" data-day="${day}"></div>
+                `;
+            }).join('');
+        }
+
+        function renderBehaviorLog(data) {
+            const container = document.getElementById('behaviorLog');
+            
+            if (data.behaviors.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">No behaviors recorded yet / अद्याप कोणतीही वागणूक नोंदवली नाही</p>';
+                return;
+            }
+            
+            container.innerHTML = data.behaviors.slice(-10).reverse().map(b => `
+                <div class="log-item ${b.points > 0 ? 'good' : 'bad'}">
+                    <span>${b.type === 'good' ? '👍' : '👎'} ${b.name}</span>
+                    <span>${b.points > 0 ? '+' : ''}${b.points} ⭐</span>
+                    <span class="log-time">${new Date(b.time).toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        }
+
+        function sendMessage() {
+            const en = document.getElementById('messageEn').value;
+            const mr = document.getElementById('messageMr').value;
+            
+            if (!en && !mr) return;
+            
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            messages.push({
+                from: 'parent',
+                text: en,
+                textMr: mr,
+                time: new Date().toISOString()
+            });
+            localStorage.setItem('messages', JSON.stringify(messages));
+            
+            document.getElementById('messageEn').value = '';
+            document.getElementById('messageMr').value = '';
+            alert('Message sent! / संदेश पाठवला!');
+        }
+
+        function addGameTime() {
+            const minutes = prompt('Enter minutes to add:');
+            if (minutes && !isNaN(minutes)) {
+                let current = parseInt(localStorage.getItem('gameTime') || '0');
+                localStorage.setItem('gameTime', current + parseInt(minutes));
+                loadDashboard();
+                alert(`Added ${minutes} minutes!`);
+            }
+        }
+
+        function resetDaily() {
+            if (confirm('Reset today\'s progress? This cannot be undone.')) {
+                localStorage.setItem('completedTasks', '[]');
+                localStorage.setItem('todayPoints', '0');
+                loadDashboard();
+            }
+        }
+
+        function exportData() {
+            const data = getData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rishi-progress.json';
+            a.click();
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('parentLoggedIn') === 'true') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadDashboard();
+        }
+    </script>
+</body>
+</html>

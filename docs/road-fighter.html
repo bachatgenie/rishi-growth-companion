@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road Fighter - रोड फायटर</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a3e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Comic Sans MS', sans-serif;
+            color: white;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #gameCanvas {
+            border: 4px solid #4ecdc4;
+            border-radius: 10px;
+            background: #2d5a3d;
+            display: block;
+            margin: 0 auto;
+        }
+        #ui {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+        }
+        #timeLeft {
+            font-size: 1.8rem;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        #score {
+            font-size: 1.3rem;
+            color: #4ecdc4;
+            margin-top: 5px;
+        }
+        #instructions {
+            color: #aaa;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .hidden { display: none !important; }
+        h1 { color: #ffd700; margin-bottom: 20px; }
+        .stats { margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div id="startScreen">
+            <h1>🏎️ Road Fighter / रोड फायटर</h1>
+            <div class="stats">
+                <p>Game Time Available: <span id="startTime">0</span> min</p>
+                <p style="color: #4ecdc4;">Use Arrow Keys to Move / बाण की ने हलवा</p>
+            </div>
+            <button class="btn" onclick="startGame()">▶️ Start Game / खेळ सुरू करा</button>
+            <button class="btn" onclick="window.close()" style="background: #ff6b6b;">❌ Close / बंद करा</button>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h1>🎮 Game Over! / खेळ संपला!</h1>
+            <div class="stats">
+                <p id="finalScore">Score: 0</p>
+                <p id="timeUsed">Time Used: 0 min</p>
+            </div>
+            <button class="btn" onclick="restartGame()">🔄 Play Again / पुन्हा खेळा</button>
+            <button class="btn" onclick="window.close()" style="background: #ff6b6b;">❌ Close / बंद करा</button>
+        </div>
+
+        <div id="ui" class="hidden">
+            <div id="timeLeft">Time: 0:00</div>
+            <div id="score">Score: 0 | Cars Passed: 0</div>
+            <div id="instructions">⬅️ ➡️ Move Left/Right | ⬆️ ⬇️ Speed Up/Slow Down</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameRunning = false;
+        let gameTime = 0, maxTime = 0, score = 0, carsPassed = 0;
+        let lastTime = 0, gameStartTime = 0;
+        
+        const player = { x: 180, y: 500, width: 40, height: 70, speed: 200, lane: 1 };
+        let enemies = [];
+        let enemySpawnTimer = 0;
+        let roadOffset = 0;
+        const lanes = [70, 180, 290];
+        
+        function getGameTime() {
+            const saved = localStorage.getItem('gameTime');
+            return saved ? parseInt(saved) : 10;
+        }
+        
+        function saveGameTime(minutes) {
+            let current = parseInt(localStorage.getItem('gameTime') || '0');
+            current = Math.max(0, current - minutes);
+            localStorage.setItem('gameTime', current);
+        }
+        
+        function init() {
+            maxTime = getGameTime();
+            gameTime = maxTime * 60;
+            document.getElementById('startTime').textContent = maxTime;
+            if (maxTime <= 0) {
+                document.querySelector('#startScreen h1').textContent = 'No Game Time Left!';
+                document.querySelector('#startScreen .stats').innerHTML = '<p style="color: #ff6b6b;">Complete tasks to earn more time!</p>';
+            }
+        }
+        
+        function startGame() {
+            if (maxTime <= 0) return;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('ui').classList.remove('hidden');
+            gameRunning = true;
+            gameStartTime = Date.now();
+            lastTime = Date.now();
+            score = 0; carsPassed = 0; enemies = [];
+            player.x = lanes[1]; player.y = 500; player.speed = 200;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            gameTime -= deltaTime;
+            if (gameTime <= 0) { gameOver(); return; }
+            
+            update(deltaTime);
+            draw();
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update(deltaTime) {
+            roadOffset += player.speed * deltaTime;
+            if (roadOffset >= 100) roadOffset -= 100;
+            
+            enemySpawnTimer += deltaTime;
+            if (enemySpawnTimer > 1.5) {
+                enemySpawnTimer = 0;
+                const lane = Math.floor(Math.random() * 3);
+                const colors = ['#ff6b6b', '#ffd700', '#4ecdc4', '#ff9ff3'];
+                enemies.push({
+                    x: lanes[lane] - 20,
+                    y: -80,
+                    width: 40,
+                    height: 70,
+                    speed: 150 + Math.random() * 100,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    passed: false
+                });
+            }
+            
+            enemies.forEach((enemy, index) => {
+                enemy.y += (enemy.speed - player.speed) * deltaTime;
+                
+                if (!enemy.passed && enemy.y > player.y + player.height) {
+                    enemy.passed = true;
+                    carsPassed++;
+                    score += 10;
+                }
+                
+                if (checkCollision(player, enemy)) {
+                    gameOver();
+                }
+                
+                if (enemy.y > 650) {
+                    enemies.splice(index, 1);
+                }
+            });
+        }
+        
+        function checkCollision(a, b) {
+            return a.x < b.x + b.width - 5 && a.x + a.width > b.x + 5 &&
+                   a.y < b.y + b.height - 5 && a.y + a.height > b.y + 5;
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#2d5a3d';
+            ctx.fillRect(0, 0, 400, 600);
+            
+            ctx.fillStyle = '#444';
+            ctx.fillRect(30, 0, 340, 600);
+            
+            ctx.fillStyle = '#fff';
+            for (let i = -1; i < 7; i++) {
+                const y = i * 100 + roadOffset;
+                ctx.fillRect(125, y, 10, 50);
+                ctx.fillRect(265, y, 10, 50);
+            }
+            
+            ctx.fillStyle = '#2d5a3d';
+            ctx.fillRect(0, 0, 30, 600);
+            ctx.fillRect(370, 0, 30, 600);
+            
+            drawCar(player.x, player.y, '#4ecdc4', true);
+            
+            enemies.forEach(enemy => drawCar(enemy.x, enemy.y, enemy.color, false));
+        }
+        
+        function drawCar(x, y, color, isPlayer) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 40, 70);
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x + 5, y + 10, 30, 25);
+            
+            ctx.fillStyle = isPlayer ? '#ffd700' : '#ff0000';
+            ctx.fillRect(x + 5, y + 5, 12, 5);
+            ctx.fillRect(x + 23, y + 5, 12, 5);
+            
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(x + 5, y + 60, 12, 5);
+            ctx.fillRect(x + 23, y + 60, 12, 5);
+            
+            ctx.fillStyle = '#666';
+            ctx.fillRect(x - 3, y + 15, 3, 15);
+            ctx.fillRect(x + 40, y + 15, 3, 15);
+            ctx.fillRect(x - 3, y + 40, 3, 15);
+            ctx.fillRect(x + 40, y + 40, 3, 15);
+        }
+        
+        function updateUI() {
+            const minutes = Math.floor(gameTime / 60);
+            const seconds = Math.floor(gameTime % 60);
+            document.getElementById('timeLeft').textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('score').textContent = `Score: ${score} | Cars Passed: ${carsPassed}`;
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            const timeUsed = Math.ceil((maxTime * 60 - gameTime) / 60);
+            saveGameTime(timeUsed);
+            
+            document.getElementById('ui').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = `Score: ${score} | Cars Passed: ${carsPassed}`;
+            document.getElementById('timeUsed').textContent = `Time Used: ${timeUsed} min`;
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            maxTime = getGameTime();
+            gameTime = maxTime * 60;
+            if (maxTime > 0) {
+                startGame();
+            } else {
+                document.getElementById('startScreen').classList.remove('hidden');
+                init();
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    if (player.lane > 0) {
+                        player.lane--;
+                        player.x = lanes[player.lane];
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (player.lane < 2) {
+                        player.lane++;
+                        player.x = lanes[player.lane];
+                    }
+                    break;
+                case 'ArrowUp':
+                    player.speed = Math.min(player.speed + 50, 400);
+                    break;
+                case 'ArrowDown':
+                    player.speed = Math.max(player.speed - 50, 100);
+                    break;
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>
