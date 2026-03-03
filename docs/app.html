@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rishi's Growth Companion - Offline Mode</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Comic Sans MS', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 { color: #764ba2; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .card h2 { color: #764ba2; margin-bottom: 15px; }
+        .task {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+        .task-icon { font-size: 2rem; margin-right: 15px; }
+        .task-info { flex: 1; }
+        .task-name { font-weight: bold; }
+        .task-desc { font-size: 0.85rem; color: #666; }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-primary { background: linear-gradient(145deg, #4ecdc4, #44a08d); color: white; }
+        .btn-good { background: linear-gradient(145deg, #4ecdc4, #44a08d); color: white; }
+        .btn-bad { background: linear-gradient(145deg, #ff6b6b, #ee5a5a); color: white; }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .stat {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #764ba2; }
+        .stat-label { font-size: 0.8rem; color: #666; }
+        .completed { background: #d4edda; }
+        .hidden { display: none; }
+        #loginScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .pin-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .pin-btn {
+            padding: 20px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+        }
+        .pin-display {
+            font-size: 2rem;
+            letter-spacing: 10px;
+            margin: 20px 0;
+            min-height: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <div style="font-size: 4rem;">🚀</div>
+            <h1>Rishi's Growth Companion</h1>
+            <p>Enter PIN: <span id="pinDisplay" class="pin-display"></span></p>
+            <div class="pin-pad">
+                <button class="pin-btn" onclick="addPin('1')">1</button>
+                <button class="pin-btn" onclick="addPin('2')">2</button>
+                <button class="pin-btn" onclick="addPin('3')">3</button>
+                <button class="pin-btn" onclick="addPin('4')">4</button>
+                <button class="pin-btn" onclick="addPin('5')">5</button>
+                <button class="pin-btn" onclick="addPin('6')">6</button>
+                <button class="pin-btn" onclick="addPin('7')">7</button>
+                <button class="pin-btn" onclick="addPin('8')">8</button>
+                <button class="pin-btn" onclick="addPin('9')">9</button>
+                <button class="pin-btn" onclick="clearPin()">⌫</button>
+                <button class="pin-btn" onclick="addPin('0')">0</button>
+                <button class="pin-btn" onclick="checkPin()">✓</button>
+            </div>
+            <p style="color: #666;">Parent? Use password: <input type="password" id="parentPass" placeholder="password" style="padding: 5px;"> <button onclick="checkParent()">Login</button></p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <div class="header">
+            <h1>🚀 Hey Rishi! 👋</h1>
+            <p>Your Growth Companion | तुमची प्रगती साथी</p>
+            <button onclick="logout()" style="margin-top: 10px; padding: 8px 15px; background: #ff6b6b; color: white; border: none; border-radius: 20px; cursor: pointer;">Logout</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="todayPoints">0</div>
+                <div class="stat-label">Points Today</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalPoints">0</div>
+                <div class="stat-label">Total Points</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="gameTime">0</div>
+                <div class="stat-label">Game Minutes</div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Tasks -->
+            <div class="card">
+                <h2>📋 Today's Tasks / आजची कामे</h2>
+                
+                <div class="task" id="task-outdoor">
+                    <div class="task-icon">🏃</div>
+                    <div class="task-info">
+                        <div class="task-name">Outdoor Play / बाहेर खेळणे</div>
+                        <div class="task-desc">Play outside for 30 min / ३० मिनिटं बाहेर खेळा</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="completeTask('outdoor', 10, 15)">Complete (+10⭐)</button>
+                </div>
+
+                <div class="task" id="task-chess">
+                    <div class="task-icon">♟️</div>
+                    <div class="task-info">
+                        <div class="task-name">Chess Practice / बुद्धिबळ सराव</div>
+                        <div class="task-desc">Practice chess 20 min / २० मिनिटं सराव करा</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="completeTask('chess', 15, 20)">Complete (+15⭐)</button>
+                </div>
+
+                <div class="task" id="task-homework">
+                    <div class="task-icon">📚</div>
+                    <div class="task-info">
+                        <div class="task-name">Homework / अभ्यास</div>
+                        <div class="task-desc">Complete all homework / सर्व अभ्यास पूर्ण करा</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="completeTask('homework', 20, 25)">Complete (+20⭐)</button>
+                </div>
+            </div>
+
+            <!-- Behaviors -->
+            <div class="card">
+                <h2>👍 Good Behaviors / चांगली वागणूक</h2>
+                <button class="btn btn-good" onclick="addBehavior('helping', 5)">🤝 Helping Others (+5)</button>
+                <button class="btn btn-good" onclick="addBehavior('polite', 3)">🙏 Being Polite (+3)</button>
+                <button class="btn btn-good" onclick="addBehavior('reading', 8)">📖 Extra Reading (+8)</button>
+            </div>
+
+            <div class="card">
+                <h2>👎 Behaviors to Avoid / टाळावी अशी वागणूक</h2>
+                <button class="btn btn-bad" onclick="addBehavior('screen', -10)">📱 Too Much Screen (-10)</button>
+                <button class="btn btn-bad" onclick="addBehavior('notlistening', -5)">🙉 Not Listening (-5)</button>
+                <button class="btn btn-bad" onclick="addBehavior('dishonest', -15)">🤥 Dishonesty (-15)</button>
+            </div>
+
+            <!-- Game -->
+            <div class="card">
+                <h2>🎮 Play Game / खेळ खेळा</h2>
+                <p>You have <strong id="gameTimeDisplay">0</strong> minutes of game time!</p>
+                <a href="https://example.com" id="gameLink" target="_blank" style="text-decoration: none;">
+                    <button class="btn btn-primary" id="playBtn" style="width: 100%; margin-top: 10px;" disabled>
+                        🎮 Play Road Fighter (Coming Soon!)
+                    </button>
+                </a>
+            </div>
+
+            <!-- ELO -->
+            <div class="card" style="background: linear-gradient(145deg, #764ba2, #667eea); color: white;">
+                <h2 style="color: white;">🏆 Your Ranking</h2>
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: bold;"><span id="eloScore">400</span> ELO</div>
+                    <div style="font-size: 1.2rem;">Rank: <span id="eloRank">Beginner</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pin = '';
+        let data = {
+            todayPoints: 0,
+            totalPoints: parseInt(localStorage.getItem('totalPoints') || '0'),
+            gameTime: parseInt(localStorage.getItem('gameTime') || '0'),
+            completedTasks: JSON.parse(localStorage.getItem('completedTasks') || '[]'),
+            elo: parseInt(localStorage.getItem('elo') || '400')
+        };
+
+        function addPin(digit) {
+            if (pin.length < 4) pin += digit;
+            document.getElementById('pinDisplay').textContent = '•'.repeat(pin.length);
+        }
+
+        function clearPin() {
+            pin = '';
+            document.getElementById('pinDisplay').textContent = '';
+        }
+
+        function checkPin() {
+            if (pin === '1234') {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateDisplay();
+            } else {
+                alert('Wrong PIN! Try 1234');
+                clearPin();
+            }
+        }
+
+        function checkParent() {
+            if (document.getElementById('parentPass').value === 'bachatgenie2024') {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateDisplay();
+            } else {
+                alert('Wrong password!');
+            }
+        }
+
+        function logout() {
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            clearPin();
+        }
+
+        function completeTask(taskId, points, gameMinutes) {
+            if (data.completedTasks.includes(taskId)) {
+                alert('Already completed today!');
+                return;
+            }
+            
+            data.completedTasks.push(taskId);
+            data.todayPoints += points;
+            data.totalPoints += points;
+            data.gameTime += gameMinutes;
+            data.elo += points * 2;
+            
+            saveData();
+            updateDisplay();
+            
+            document.getElementById('task-' + taskId).classList.add('completed');
+            event.target.textContent = '✓ Done!';
+            event.target.disabled = true;
+        }
+
+        function addBehavior(type, points) {
+            data.todayPoints += points;
+            data.totalPoints += Math.max(0, points);
+            data.elo += points;
+            
+            if (points < 0) {
+                alert('⚠️ ' + type + ': ' + points + ' points. Let\'s do better!');
+            }
+            
+            saveData();
+            updateDisplay();
+        }
+
+        function saveData() {
+            localStorage.setItem('totalPoints', data.totalPoints);
+            localStorage.setItem('gameTime', data.gameTime);
+            localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
+            localStorage.setItem('elo', data.elo);
+        }
+
+        function updateDisplay() {
+            document.getElementById('todayPoints').textContent = data.todayPoints;
+            document.getElementById('totalPoints').textContent = data.totalPoints;
+            document.getElementById('gameTime').textContent = data.gameTime;
+            document.getElementById('gameTimeDisplay').textContent = data.gameTime;
+            document.getElementById('eloScore').textContent = data.elo;
+            document.getElementById('eloRank').textContent = getRank(data.elo);
+            
+            const playBtn = document.getElementById('playBtn');
+            playBtn.disabled = data.gameTime <= 0;
+            playBtn.textContent = data.gameTime > 0 ? '🎮 Play Road Fighter (' + data.gameTime + ' min)' : '🎮 No game time left!';
+        }
+
+        function getRank(elo) {
+            if (elo >= 2400) return 'Grandmaster';
+            if (elo >= 2000) return 'Master';
+            if (elo >= 1600) return 'Expert';
+            if (elo >= 1200) return 'Advanced';
+            if (elo >= 800) return 'Intermediate';
+            return 'Beginner';
+        }
+
+        // Check for saved session
+        if (localStorage.getItem('loggedIn') === 'true') {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>
