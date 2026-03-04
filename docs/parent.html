@@ -413,8 +413,14 @@
             <div class="section">
                 <h2>⚡ Quick Actions / जलद क्रिया</h2>
                 
+                <div style="background: #f0f0f0; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <p><strong>Current Game Time / सध्याची खेळाची वेळ:</strong> <span id="currentGameTime">0</span> min</p>
+                    <p><strong>Time Used Today / आज वापरलेली वेळ:</strong> <span id="timeUsedToday">0</span> / 15 min</p>
+                </div>
+                
                 <button class="btn btn-success" onclick="addGameTime()">➕ Add Game Time / खेळाची वेळ वाढवा</button>
-                <button class="btn btn-danger" onclick="resetDaily()">🔄 Reset Daily / दैनिक रीसेट करा</button>
+                <button class="btn btn-primary" onclick="resetGameTimeUsed()">🔄 Reset Time Used / वापरलेली वेळ रीसेट करा</button>
+                <button class="btn btn-danger" onclick="resetDaily()">🗑️ Reset Daily / दैनिक रीसेट करा</button>
                 <button class="btn btn-primary" onclick="exportData()">📥 Export Data / डेटा निर्यात करा</button>
             </div>
         </div>
@@ -459,6 +465,11 @@
             document.getElementById('gameTime').textContent = data.gameTime;
             document.getElementById('tasksCompleted').textContent = data.completedTasks.length;
             document.getElementById('streak').textContent = calculateStreak();
+            
+            // Game time display
+            document.getElementById('currentGameTime').textContent = data.gameTime;
+            const used = parseInt(localStorage.getItem('gameTimeUsed') || '0');
+            document.getElementById('timeUsedToday').textContent = used;
             
             // ELO
             document.getElementById('eloScore').textContent = data.elo;
@@ -570,6 +581,15 @@
                 localStorage.setItem('gameTime', current + parseInt(minutes));
                 loadDashboard();
                 alert(`Added ${minutes} minutes!`);
+            }
+        }
+
+        function resetGameTimeUsed() {
+            if (confirm('Reset time used today? This will allow 15 more minutes of gameplay.')) {
+                localStorage.setItem('gameTimeUsed', '0');
+                localStorage.removeItem('lastPlayedDate');
+                loadDashboard();
+                alert('Time used reset! / वापरलेली वेळ रीसेट केली!');
             }
         }
 

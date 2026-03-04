@@ -3,316 +3,664 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Road Fighter - रोड फायटर</title>
+    <title>Road Fighter Turbo</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body {
-            background: #1a1a3e;
+            background: #0a0a1a;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             font-family: 'Comic Sans MS', sans-serif;
-            color: white;
+            overflow: hidden;
         }
-        #gameContainer {
-            text-align: center;
+        #gameWrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
         }
         #gameCanvas {
-            border: 4px solid #4ecdc4;
-            border-radius: 10px;
-            background: #2d5a3d;
+            width: 100%;
+            height: auto;
             display: block;
-            margin: 0 auto;
+            background: #1a3a1a;
         }
-        #ui {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 10px;
-        }
-        #timeLeft {
-            font-size: 1.8rem;
-            color: #ffd700;
-            font-weight: bold;
-        }
-        #score {
-            font-size: 1.3rem;
-            color: #4ecdc4;
-            margin-top: 5px;
-        }
-        #instructions {
-            color: #aaa;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
-        #startScreen, #gameOverScreen {
+        
+        /* Screens */
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            background: linear-gradient(180deg, #1a1a3e 0%, #0a0a1a 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
         }
+        .screen.hidden { display: none !important; }
+        
+        /* Welcome Screen */
+        #welcomeScreen {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+        .welcome-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        .welcome-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .car-preview {
+            font-size: 5rem;
+            margin: 20px 0;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Buttons */
         .btn {
             padding: 15px 40px;
             font-size: 1.2rem;
-            background: linear-gradient(145deg, #4ecdc4, #44a08d);
-            color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             margin: 10px;
             font-family: inherit;
             font-weight: bold;
+            transition: all 0.3s;
+            min-width: 200px;
         }
         .btn:hover { transform: scale(1.05); }
-        .hidden { display: none !important; }
-        h1 { color: #ffd700; margin-bottom: 20px; }
-        .stats { margin: 15px 0; }
+        .btn-primary {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 5px 20px rgba(78,205,196,0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Stats */
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin: 10px 0;
+        }
+        .stat-value {
+            font-size: 2rem;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* Touch Controls */
+        #touchControls {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid rgba(255,255,255,0.5);
+            color: white;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+        .control-btn:active {
+            background: rgba(78,205,196,0.5);
+        }
+        .control-btn.boost {
+            background: rgba(255,215,0,0.3);
+            border-color: #ffd700;
+        }
+        
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .hud-item {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        .hud-time { color: #ffd700; }
+        .hud-score { color: #4ecdc4; }
+        .hud-speed { color: #ff6b6b; }
+        
+        /* Game Over */
+        .final-stats {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            min-width: 250px;
+        }
+        .final-stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1rem;
+        }
+        .final-stat span:last-child {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        /* Limit reached */
+        .limit-message {
+            background: rgba(255,107,107,0.2);
+            border: 2px solid #ff6b6b;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .limit-message h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="gameWrapper">
+        <canvas id="gameCanvas" width="400" height="700"></canvas>
         
-        <div id="startScreen">
-            <h1>🏎️ Road Fighter / रोड फायटर</h1>
-            <div class="stats">
-                <p>Game Time Available: <span id="startTime">0</span> min</p>
-                <p style="color: #4ecdc4;">Use Arrow Keys to Move / बाण की ने हलवा</p>
-            </div>
-            <button class="btn" onclick="startGame()">▶️ Start Game / खेळ सुरू करा</button>
-            <button class="btn" onclick="window.close()" style="background: #ff6b6b;">❌ Close / बंद करा</button>
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div class="hud-item hud-time">⏱️ <span id="timeDisplay">15:00</span></div>
+            <div class="hud-item hud-score">🏆 <span id="scoreDisplay">0</span></div>
+            <div class="hud-item hud-speed">⚡ <span id="speedDisplay">200</span> km/h</div>
         </div>
-
-        <div id="gameOverScreen" class="hidden">
-            <h1>🎮 Game Over! / खेळ संपला!</h1>
-            <div class="stats">
-                <p id="finalScore">Score: 0</p>
-                <p id="timeUsed">Time Used: 0 min</p>
-            </div>
-            <button class="btn" onclick="restartGame()">🔄 Play Again / पुन्हा खेळा</button>
-            <button class="btn" onclick="window.close()" style="background: #ff6b6b;">❌ Close / बंद करा</button>
+        
+        <!-- Touch Controls -->
+        <div id="touchControls" class="hidden">
+            <div class="control-btn" id="btnLeft">◀️</div>
+            <div class="control-btn boost" id="btnBoost">🚀</div>
+            <div class="control-btn" id="btnRight">▶️</div>
         </div>
-
-        <div id="ui" class="hidden">
-            <div id="timeLeft">Time: 0:00</div>
-            <div id="score">Score: 0 | Cars Passed: 0</div>
-            <div id="instructions">⬅️ ➡️ Move Left/Right | ⬆️ ⬇️ Speed Up/Slow Down</div>
+        
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen">
+            <div class="welcome-title">🎮 Welcome to Your World 🎮</div>
+            <div class="welcome-name" id="playerName">Rishi</div>
+            <div class="car-preview">🏎️</div>
+            
+            <div class="stat-box">
+                <div class="stat-value" id="availableTime">15</div>
+                <div class="stat-label">minutes available / उपलब्ध मिनिटे</div>
+            </div>
+            
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()">
+                ▶️ START RACE / शर्यत सुरू करा
+            </button>
+            
+            <button class="btn btn-danger" onclick="window.close()">
+                ❌ EXIT / बाहेर पडा
+            </button>
+        </div>
+        
+        <!-- Limit Reached Screen -->
+        <div id="limitScreen" class="screen hidden">
+            <div class="limit-message">
+                <h3>⏰ Daily Limit Reached! / दैनिक मर्यादा पूर्ण!</h3>
+                <p>You've used your 15 minutes for today.</p>
+                <p>तुम्ही आजची १५ मिनिटे वापरली आहेत.</p>
+            </div>
+            
+            <p style="margin: 20px 0;">Complete more tasks to earn extra time! / अधिक वेळ मिळवण्यासाठी अधिक कामे पूर्ण करा!</p>
+            
+            <button class="btn btn-danger" onclick="window.close()">
+                ❌ CLOSE / बंद करा
+            </button>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen hidden">
+            <h1>🏁 Race Complete! / शर्यत पूर्ण!</h1>
+            
+            <div class="final-stats">
+                <div class="final-stat">
+                    <span>Score / गुण:</span>
+                    <span id="finalScore">0</span>
+                </div>
+                <div class="final-stat">
+                    <span>Cars Passed / गाड्या पार केल्या:</span>
+                    <span id="finalCars">0</span>
+                </div>
+                <div class="final-stat">
+                    <span>Time Used / वापरलेली वेळ:</span>
+                    <span id="finalTime">0</span> min
+                </div>
+                <div class="final-stat">
+                    <span>Remaining / उर्वरित:</span>
+                    <span id="finalRemaining">0</span> min
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="restartBtn" onclick="restartGame()">
+                🔄 PLAY AGAIN / पुन्हा खेळा
+            </button>
+            
+            <button class="btn btn-danger" onclick="window.close()">
+                ❌ EXIT / बाहेर पडा
+            </button>
         </div>
     </div>
 
     <script>
+        // Game constants
+        const MAX_DAILY_TIME = 15; // minutes
+        const CANVAS_WIDTH = 400;
+        const CANVAS_HEIGHT = 700;
+        
+        // Get player name from parent app
+        function getPlayerName() {
+            return localStorage.getItem('childName') || 'Rishi';
+        }
+        
+        // Get available game time
+        function getAvailableTime() {
+            const used = parseInt(localStorage.getItem('gameTimeUsed') || '0');
+            const earned = parseInt(localStorage.getItem('gameTime') || '0');
+            const today = new Date().toDateString();
+            const lastPlayed = localStorage.getItem('lastPlayedDate');
+            
+            // Reset if new day
+            if (lastPlayed !== today) {
+                localStorage.setItem('gameTimeUsed', '0');
+                localStorage.setItem('lastPlayedDate', today);
+                return Math.min(MAX_DAILY_TIME, earned);
+            }
+            
+            return Math.max(0, Math.min(MAX_DAILY_TIME, earned) - used);
+        }
+        
+        // Use game time
+        function useGameTime(minutes) {
+            const used = parseInt(localStorage.getItem('gameTimeUsed') || '0');
+            localStorage.setItem('gameTimeUsed', (used + minutes).toString());
+        }
+        
+        // Canvas setup
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        let gameRunning = false;
-        let gameTime = 0, maxTime = 0, score = 0, carsPassed = 0;
-        let lastTime = 0, gameStartTime = 0;
+        // Game state
+        let gameState = 'welcome'; // welcome, playing, gameover
+        let gameTime = 0;
+        let score = 0;
+        let carsPassed = 0;
+        let lastTime = 0;
+        let gameStartTime = 0;
+        let availableTime = 0;
         
-        const player = { x: 180, y: 500, width: 40, height: 70, speed: 200, lane: 1 };
+        // Player
+        const player = {
+            x: 180,
+            y: 550,
+            width: 40,
+            height: 70,
+            speed: 200,
+            targetX: 180,
+            lane: 1 // 0, 1, 2
+        };
+        
+        const lanes = [60, 180, 300];
         let enemies = [];
-        let enemySpawnTimer = 0;
         let roadOffset = 0;
-        const lanes = [70, 180, 290];
+        let particles = [];
         
-        function getGameTime() {
-            const saved = localStorage.getItem('gameTime');
-            return saved ? parseInt(saved) : 10;
-        }
-        
-        function saveGameTime(minutes) {
-            let current = parseInt(localStorage.getItem('gameTime') || '0');
-            current = Math.max(0, current - minutes);
-            localStorage.setItem('gameTime', current);
-        }
-        
+        // Initialize
         function init() {
-            maxTime = getGameTime();
-            gameTime = maxTime * 60;
-            document.getElementById('startTime').textContent = maxTime;
-            if (maxTime <= 0) {
-                document.querySelector('#startScreen h1').textContent = 'No Game Time Left!';
-                document.querySelector('#startScreen .stats').innerHTML = '<p style="color: #ff6b6b;">Complete tasks to earn more time!</p>';
+            document.getElementById('playerName').textContent = getPlayerName();
+            availableTime = getAvailableTime();
+            document.getElementById('availableTime').textContent = availableTime;
+            
+            if (availableTime <= 0) {
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('limitScreen').classList.remove('hidden');
             }
         }
         
+        // Start game
         function startGame() {
-            if (maxTime <= 0) return;
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('ui').classList.remove('hidden');
-            gameRunning = true;
+            if (availableTime <= 0) return;
+            
+            gameState = 'playing';
+            gameTime = availableTime * 60; // seconds
             gameStartTime = Date.now();
             lastTime = Date.now();
-            score = 0; carsPassed = 0; enemies = [];
-            player.x = lanes[1]; player.y = 500; player.speed = 200;
+            score = 0;
+            carsPassed = 0;
+            enemies = [];
+            particles = [];
+            player.x = lanes[1];
+            player.y = 550;
+            player.speed = 200;
+            player.lane = 1;
+            
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('limitScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('touchControls').classList.remove('hidden');
+            
             requestAnimationFrame(gameLoop);
         }
         
+        // Game loop
         function gameLoop() {
-            if (!gameRunning) return;
+            if (gameState !== 'playing') return;
+            
             const currentTime = Date.now();
             const deltaTime = (currentTime - lastTime) / 1000;
             lastTime = currentTime;
             
+            // Update game time
             gameTime -= deltaTime;
-            if (gameTime <= 0) { gameOver(); return; }
+            if (gameTime <= 0) {
+                gameOver();
+                return;
+            }
             
             update(deltaTime);
             draw();
-            updateUI();
+            updateHUD();
+            
             requestAnimationFrame(gameLoop);
         }
         
+        // Update game logic
         function update(deltaTime) {
-            roadOffset += player.speed * deltaTime;
+            // Smooth lane change
+            player.x += (player.targetX - player.x) * 10 * deltaTime;
+            
+            // Road scrolling
+            roadOffset += player.speed * deltaTime * 0.5;
             if (roadOffset >= 100) roadOffset -= 100;
             
-            enemySpawnTimer += deltaTime;
-            if (enemySpawnTimer > 1.5) {
-                enemySpawnTimer = 0;
+            // Spawn enemies
+            if (Math.random() < 0.02) {
                 const lane = Math.floor(Math.random() * 3);
-                const colors = ['#ff6b6b', '#ffd700', '#4ecdc4', '#ff9ff3'];
+                const colors = ['#ff4444', '#ffaa00', '#44ff44', '#4444ff', '#ff44ff'];
                 enemies.push({
                     x: lanes[lane] - 20,
-                    y: -80,
+                    y: -100,
                     width: 40,
                     height: 70,
-                    speed: 150 + Math.random() * 100,
+                    speed: 100 + Math.random() * 150,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     passed: false
                 });
             }
             
+            // Update enemies
             enemies.forEach((enemy, index) => {
-                enemy.y += (enemy.speed - player.speed) * deltaTime;
+                enemy.y += (enemy.speed + player.speed * 0.5) * deltaTime;
                 
+                // Check pass
                 if (!enemy.passed && enemy.y > player.y + player.height) {
                     enemy.passed = true;
                     carsPassed++;
-                    score += 10;
+                    score += 100;
+                    createParticles(enemy.x + 20, enemy.y);
                 }
                 
+                // Check collision
                 if (checkCollision(player, enemy)) {
+                    createParticles(player.x + 20, player.y + 35, '#ff4444');
                     gameOver();
                 }
                 
-                if (enemy.y > 650) {
+                // Remove off-screen
+                if (enemy.y > 800) {
                     enemies.splice(index, 1);
                 }
             });
+            
+            // Update particles
+            particles.forEach((p, i) => {
+                p.x += p.vx * deltaTime;
+                p.y += p.vy * deltaTime;
+                p.life -= deltaTime;
+                if (p.life <= 0) particles.splice(i, 1);
+            });
         }
         
+        // Check collision
         function checkCollision(a, b) {
-            return a.x < b.x + b.width - 5 && a.x + a.width > b.x + 5 &&
-                   a.y < b.y + b.height - 5 && a.y + a.height > b.y + 5;
+            return a.x < b.x + b.width - 10 &&
+                   a.x + a.width > b.x + 10 &&
+                   a.y < b.y + b.height - 10 &&
+                   a.y + a.height > b.y + 10;
         }
         
+        // Create particles
+        function createParticles(x, y, color = '#ffd700') {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 200,
+                    vy: (Math.random() - 0.5) * 200,
+                    life: 0.5,
+                    color: color
+                });
+            }
+        }
+        
+        // Draw game
         function draw() {
-            ctx.fillStyle = '#2d5a3d';
-            ctx.fillRect(0, 0, 400, 600);
+            // Clear
+            ctx.fillStyle = '#1a3a1a';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
             
-            ctx.fillStyle = '#444';
-            ctx.fillRect(30, 0, 340, 600);
+            // Road
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(20, 0, 360, CANVAS_HEIGHT);
             
-            ctx.fillStyle = '#fff';
-            for (let i = -1; i < 7; i++) {
+            // Road markings
+            ctx.fillStyle = '#ffffff';
+            for (let i = -1; i < 8; i++) {
                 const y = i * 100 + roadOffset;
-                ctx.fillRect(125, y, 10, 50);
-                ctx.fillRect(265, y, 10, 50);
+                ctx.fillRect(118, y, 4, 50);
+                ctx.fillRect(238, y, 4, 50);
             }
             
-            ctx.fillStyle = '#2d5a3d';
-            ctx.fillRect(0, 0, 30, 600);
-            ctx.fillRect(370, 0, 30, 600);
+            // Grass edges
+            ctx.fillStyle = '#0d5a0d';
+            ctx.fillRect(0, 0, 20, CANVAS_HEIGHT);
+            ctx.fillRect(380, 0, 20, CANVAS_HEIGHT);
             
-            drawCar(player.x, player.y, '#4ecdc4', true);
-            
+            // Draw enemies
             enemies.forEach(enemy => drawCar(enemy.x, enemy.y, enemy.color, false));
+            
+            // Draw player
+            drawCar(player.x, player.y, '#00aaff', true);
+            
+            // Draw particles
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life * 2;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+            });
+            ctx.globalAlpha = 1;
         }
         
+        // Draw car
         function drawCar(x, y, color, isPlayer) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x + 5, y + 75, 30, 5);
+            
+            // Body
             ctx.fillStyle = color;
             ctx.fillRect(x, y, 40, 70);
             
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x + 5, y + 10, 30, 25);
+            // Windows
+            ctx.fillStyle = '#1a1a3e';
+            ctx.fillRect(x + 5, y + 15, 30, 20);
             
-            ctx.fillStyle = isPlayer ? '#ffd700' : '#ff0000';
-            ctx.fillRect(x + 5, y + 5, 12, 5);
-            ctx.fillRect(x + 23, y + 5, 12, 5);
+            // Lights
+            ctx.fillStyle = isPlayer ? '#ffff00' : '#ff0000';
+            ctx.fillRect(x + 5, y + 5, 10, 5);
+            ctx.fillRect(x + 25, y + 5, 10, 5);
             
             ctx.fillStyle = '#ff0000';
-            ctx.fillRect(x + 5, y + 60, 12, 5);
-            ctx.fillRect(x + 23, y + 60, 12, 5);
+            ctx.fillRect(x + 5, y + 60, 10, 5);
+            ctx.fillRect(x + 25, y + 60, 10, 5);
             
-            ctx.fillStyle = '#666';
-            ctx.fillRect(x - 3, y + 15, 3, 15);
-            ctx.fillRect(x + 40, y + 15, 3, 15);
-            ctx.fillRect(x - 3, y + 40, 3, 15);
-            ctx.fillRect(x + 40, y + 40, 3, 15);
+            // Wheels
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 3, y + 15, 6, 12);
+            ctx.fillRect(x + 37, y + 15, 6, 12);
+            ctx.fillRect(x - 3, y + 45, 6, 12);
+            ctx.fillRect(x + 37, y + 45, 6, 12);
         }
         
-        function updateUI() {
-            const minutes = Math.floor(gameTime / 60);
-            const seconds = Math.floor(gameTime % 60);
-            document.getElementById('timeLeft').textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('score').textContent = `Score: ${score} | Cars Passed: ${carsPassed}`;
+        // Update HUD
+        function updateHUD() {
+            const mins = Math.floor(gameTime / 60);
+            const secs = Math.floor(gameTime % 60);
+            document.getElementById('timeDisplay').textContent = 
+                `${mins}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('speedDisplay').textContent = Math.floor(player.speed);
         }
         
+        // Game over
         function gameOver() {
-            gameRunning = false;
-            const timeUsed = Math.ceil((maxTime * 60 - gameTime) / 60);
-            saveGameTime(timeUsed);
+            gameState = 'gameover';
             
-            document.getElementById('ui').classList.add('hidden');
+            const timeUsed = Math.ceil((availableTime * 60 - gameTime) / 60);
+            const remaining = Math.max(0, availableTime - timeUsed);
+            
+            useGameTime(timeUsed);
+            
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('touchControls').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.remove('hidden');
-            document.getElementById('finalScore').textContent = `Score: ${score} | Cars Passed: ${carsPassed}`;
-            document.getElementById('timeUsed').textContent = `Time Used: ${timeUsed} min`;
-        }
-        
-        function restartGame() {
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            maxTime = getGameTime();
-            gameTime = maxTime * 60;
-            if (maxTime > 0) {
-                startGame();
-            } else {
-                document.getElementById('startScreen').classList.remove('hidden');
-                init();
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalCars').textContent = carsPassed;
+            document.getElementById('finalTime').textContent = timeUsed;
+            document.getElementById('finalRemaining').textContent = remaining;
+            
+            // Disable restart if no time left
+            if (remaining <= 0) {
+                document.getElementById('restartBtn').disabled = true;
+                document.getElementById('restartBtn').textContent = '⏰ No Time Left / वेळ संपली';
             }
         }
         
+        // Restart
+        function restartGame() {
+            availableTime = getAvailableTime();
+            if (availableTime > 0) {
+                startGame();
+            }
+        }
+        
+        // Controls
+        function moveLeft() {
+            if (player.lane > 0) {
+                player.lane--;
+                player.targetX = lanes[player.lane];
+            }
+        }
+        
+        function moveRight() {
+            if (player.lane < 2) {
+                player.lane++;
+                player.targetX = lanes[player.lane];
+            }
+        }
+        
+        function boost() {
+            player.speed = Math.min(player.speed + 100, 500);
+            setTimeout(() => { player.speed = 200; }, 2000);
+        }
+        
+        // Touch controls
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveLeft();
+        });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveRight();
+        });
+        document.getElementById('btnBoost').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            boost();
+        });
+        
+        // Mouse controls
+        document.getElementById('btnLeft').addEventListener('mousedown', moveLeft);
+        document.getElementById('btnRight').addEventListener('mousedown', moveRight);
+        document.getElementById('btnBoost').addEventListener('mousedown', boost);
+        
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
-            
+            if (gameState !== 'playing') return;
             switch(e.key) {
-                case 'ArrowLeft':
-                    if (player.lane > 0) {
-                        player.lane--;
-                        player.x = lanes[player.lane];
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (player.lane < 2) {
-                        player.lane++;
-                        player.x = lanes[player.lane];
-                    }
-                    break;
-                case 'ArrowUp':
-                    player.speed = Math.min(player.speed + 50, 400);
-                    break;
-                case 'ArrowDown':
-                    player.speed = Math.max(player.speed - 50, 100);
-                    break;
+                case 'ArrowLeft': moveLeft(); break;
+                case 'ArrowRight': moveRight(); break;
+                case 'ArrowUp': boost(); break;
             }
         });
         
+        // Init
         init();
     </script>
 </body>
